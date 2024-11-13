@@ -342,13 +342,27 @@ app.post("/api/race-vote", (req, res) => {
             resetRace(winner);
         }
         
-        res.cookie("hasRaceVoted", true, { maxAge: 60 * 60 * 1000, httpOnly: true });
+        res.cookie("hasRaceVoted", true, { maxAge: 5 * 60 * 1000, path: '/', httpOnly: true });
         return res.json({ message: "Başarılı Bir Şekilde Oy Verdin!" });
     } else {
         return res.status(400).json({ message: "Geçersiz Bölüm." });
     }
 });
 
+
+app.get('/api/clear-all-vote', (req, res) => {
+    res.clearCookie("hasRaceVoted", { path: '/' });
+	res.clearCookie("hasVoted", { path: '/' });
+    res.send("all cookie cleared.");
+});
+app.get('/api/clear-race-vote', (req, res) => {
+    res.clearCookie("hasRaceVoted", { path: '/' });
+    res.send("race cookie cleared.");
+});
+app.get('/api/clear-vote-vote', (req, res) => {
+	res.clearCookie("hasVoted", { path: '/' });
+    res.send("vote cookie cleared.");
+});
 // Duyuru sil
 app.delete("/api/duyuru-sil/:id", (req, res) => {
 	const id = parseInt(req.params.id);
