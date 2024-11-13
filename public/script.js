@@ -17,6 +17,7 @@ function voteForRace(department) {
 
   if (lastVoteTime && currentTime - lastVoteTime < 5 * 60 * 1000) {
       document.getElementById('message').innerText = '5 Dakika Dolmadan Oy Kullanamazsınız.';
+
       return;
   }
 
@@ -33,39 +34,37 @@ function voteForRace(department) {
   .catch(error => console.error('Error voting for race:', error));
 }
 
+function deleteCookie(name) {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+  console.log(`Cookie '${name}' deletion attempted. Current cookies:`, document.cookie);
+}
+
 // Geri sayım işlevi
 function startNextVoteTimer(duration) {
   clearInterval(nextVoteInterval);
   const endTime = Date.now() + duration;
 
   function updateNextVoteTimer() {
-    const timeLeft = endTime - Date.now();
-    if (timeLeft <= 0) {
-      clearInterval(nextVoteInterval);
-      document.getElementById('next-vote-timer').innerText = 'Bir sonraki oy zamanı geldi!';
-    } else {
-      const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
-      const seconds = Math.floor((timeLeft / 1000) % 60);
-      document.getElementById('next-vote-timer').innerText = `Bir Sonraki Oy için Kalan süre: ${minutes} dk ${seconds} sn`;
-    }
+      const timeLeft = endTime - Date.now();
+
+      if (timeLeft <= 0) {
+          clearInterval(nextVoteInterval);
+          document.getElementById('next-vote-timer').innerText = 'Bir sonraki oy zamanı geldi!';
+          
+          // Clear the cookie and localStorage
+          localStorage.removeItem("lastRaceVoteTime");
+          fetch('/api/clear-race-vote').then(() => console.log("hasRaceVoted cookie cleared"));
+          
+      } else {
+          const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
+          const seconds = Math.floor((timeLeft / 1000) % 60);
+          document.getElementById('next-vote-timer').innerText = `Bir Sonraki Oy için Kalan süre: ${minutes} dk ${seconds} sn`;
+      }
   }
 
   updateNextVoteTimer();
   nextVoteInterval = setInterval(updateNextVoteTimer, 1000);
 }
-
-window.onload = () => {
-  connectWebSocket();
-
-  // Sayfa yüklendiğinde, kalan süreyi kontrol et ve geri sayımı başlat
-  const lastVoteTime = localStorage.getItem('lastRaceVoteTime');
-  if (lastVoteTime) {
-    const elapsed = Date.now() - lastVoteTime;
-    if (elapsed < 5 * 60 * 1000) {
-      startNextVoteTimer(5 * 60 * 1000 - elapsed);
-    }
-  }
-};
 
 
 function voteForPoll(type) {
@@ -121,7 +120,9 @@ function updateRace(data) {
 
           if (remaining > 0) {
               setTimeout(startCountdown, 1000);
-          }
+          }else {
+            localStorage.removeItem('lastRaceVoteTime');
+        }
       }
   }
 
@@ -136,16 +137,23 @@ setInterval(() => {
 }, 5000);
 
 window.onload = () => {
+ 
 
-
-  // Sayfa yüklendiğinde, kalan süreyi kontrol et ve geri sayımı başlat
-  const lastVoteTime = localStorage.getItem('lastVoteTime');
+  const lastVoteTime = localStorage.getItem('lastRaceVoteTime');
   if (lastVoteTime) {
-    const elapsed = Date.now() - lastVoteTime;
-    if (elapsed < 5 * 60 * 1000) {
-      startNextVoteTimer(5 * 60 * 1000 - elapsed);
-    }
+      const elapsed = Date.now() - lastVoteTime;
+
+      if (elapsed < 5 * 60 * 1000) {
+          // Start countdown with remaining time
+          startNextVoteTimer(5 * 60 * 1000 - elapsed);
+      } else {
+          // Clear expired lastRaceVoteTime and cookie immediately
+          localStorage.removeItem("lastRaceVoteTime");
+          fetch('/api/clear-race-vote').then(() => console.log("hasRaceVoted cookie cleared"));
+        
+      }
   }
+
 // Kazanan departmanların toplam sayısını hesaplama fonksiyonu
 function calculateDepartmentWins(winners) {
     const winCounts = {};
