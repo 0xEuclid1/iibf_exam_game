@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duyuru Ekleme Paneli</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 text-gray-900">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4">Duyuru Ekleme Paneli</h1>
+        <form id="duyuruForm" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <div class="flex flex-wrap -mx-2 mb-4">
+                <div class="w-full md:w-1/2 px-2 mb-4 md:mb-0">
+                    <label for="gun" class="block text-gray-700 text-sm font-bold mb-2">Gün:</label>
+                    <input type="date" id="gun" name="gun" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="w-full md:w-1/2 px-2">
+                    <label for="saat" class="block text-gray-700 text-sm font-bold mb-2">Saat:</label>
+                    <input type="text" id="saat" name="saat" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+            </div>
+            <div class="flex flex-wrap -mx-2 mb-4">
+                <div class="w-full md:w-1/2 px-2 mb-4 md:mb-0">
+                    <label for="bolum" class="block text-gray-700 text-sm font-bold mb-2">Bölüm:</label>
+                    <input type="text" id="bolum" name="bolum" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="w-full md:w-1/2 px-2">
+                    <label for="sinif" class="block text-gray-700 text-sm font-bold mb-2">Sınıf:</label>
+                    <input type="text" id="sinif" name="sinif" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+            </div>
+            <div class="flex flex-wrap -mx-2 mb-4">
+                <div class="w-full md:w-1/2 px-2 mb-4 md:mb-0">
+                    <label for="ders_kodu" class="block text-gray-700 text-sm font-bold mb-2">Dersin Kodu:</label>
+                    <input type="text" id="ders_kodu" name="ders_kodu" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="w-full md:w-1/2 px-2">
+                    <label for="ders_adi" class="block text-gray-700 text-sm font-bold mb-2">Dersin Adı:</label>
+                    <input type="text" id="ders_adi" name="ders_adi" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+            </div>
+            <div class="flex flex-wrap -mx-2 mb-4">
+                <div class="w-full md:w-1/2 px-2 mb-4 md:mb-0">
+                    <label for="ogretim_elemani" class="block text-gray-700 text-sm font-bold mb-2">Öğretim
+                        Elemanı:</label>
+                    <input type="text" id="ogretim_elemani" name="ogretim_elemani" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+                <div class="w-full md:w-1/2 px-2">
+                    <label for="derslik" class="block text-gray-700 text-sm font-bold mb-2">Derslik:</label>
+                    <input type="text" id="derslik" name="derslik" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+            </div>
+            <div class="flex flex-wrap -mx-2 mb-4">
+                <div class="w-full md:w-1/2 px-2">
+                    <label for="yayin_tarihi" class="block text-gray-700 text-sm font-bold mb-2">Yayın Tarihi:</label>
+                    <input type="datetime-local" id="yayin_tarihi" name="yayin_tarihi" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+            </div>
+            <div class="flex items-center justify-between">
+                <button type="button" onclick="duyuruEkle()"
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Duyuru
+                    Ekle</button>
+            </div>
+        </form>
+
+        <h2 class="text-2xl font-bold mb-4">Mevcut Duyurular</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full  bg-white border border-gray-300">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                        <th class="w-1 px-1 py-2">ID</th>
+                        <th class="w-24 py-2">GÜN</th>
+                        <th class="w-28 py-2">SAAT</th>
+                        <th class="w-20 py-2">BÖLÜM</th>
+                        <th class="w-auto py-2">SINIF</th>
+                        <th class="w-auto  py-2">DERSİN KODU</th>
+                        <th class="w-auto  py-2">DERSİN ADI</th>
+                        <th class="w-auto  py-2">ÖĞRETİM ELEMANI</th>
+                        <th class="w-auto  py-2">DERSLİK</th>
+                        <th class="w-auto  py-2">SINIF LİSTE</th>
+                        <th class="w-auto  py-2">YAYIN TARİHİ</th>
+                        <th class="w-auto  py-2">İŞLEMLER</th>
+                    </tr>
+                </thead>
+                <tbody id="duyuruListesi" class="text-gray-600 text-sm font-light">
+                    <!-- Duyurular burada listelenecek -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            duyurulariGetir();
+        });
+
+        function duyuruEkle() {
+            const gun = document.getElementById('gun').value;
+            const saat = document.getElementById('saat').value;
+            const bolum = document.getElementById('bolum').value;
+            const sinif = document.getElementById('sinif').value;
+            const ders_kodu = document.getElementById('ders_kodu').value;
+            const ders_adi = document.getElementById('ders_adi').value;
+            const ogretim_elemani = document.getElementById('ogretim_elemani').value;
+            const derslik = document.getElementById('derslik').value;
+            const sinifliste = document.getElementById('sinifliste').value;
+            const yayin_tarihi = document.getElementById('yayin_tarihi').value;
+
+            fetch('/api/duyuru-ekle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ gun, saat, bolum, sinif, ders_kodu, ders_adi, ogretim_elemani, derslik, sinifliste, yayin_tarihi })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Duyuru eklendi!');
+                    duyurulariGetir(); // Duyuruları yenile
+                })
+                .catch(err => console.error('Hata:', err));
+        }
+
+        function duyurulariGetir() {
+            fetch('/api/duyurular')
+                .then(response => response.json())
+                .then(duyurular => {
+                    const duyuruListesi = document.getElementById('duyuruListesi');
+                    duyuruListesi.innerHTML = ''; // Mevcut içeriği temizle
+
+                    duyurular.forEach(duyuru => {
+                        const row = document.createElement('tr');
+                        row.classList.add('border-b', 'border-gray-200', 'hover:bg-gray-100');
+                        row.innerHTML = `
+                        <td class="px-1  border-r border-gray-300 py-2 text-xs  whitespace-nowrap">${duyuru.id}</td>
+                            <td class="px-1 py-3 text-xs  whitespace-nowrap"><input type="text" value="${duyuru.gun}" onchange="duyuruGuncelle(${duyuru.id}, 'gun', this.value)" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></td>
+                            <td class="py-1 px-3 text-xs  whitespace-nowrap"><input type="text" value="${duyuru.saat}" onchange="duyuruGuncelle(${duyuru.id}, 'saat', this.value)" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></td>
+                            <td class="py-1 px-3 text-xs  whitespace-nowrap"><input type="text" value="${duyuru.bolum}" onchange="duyuruGuncelle(${duyuru.id}, 'bolum', this.value)" class="shadow appearance-none border rounded w-10 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></td>
+                            <td class="py-1 px-3 text-xs  whitespace-nowrap"><input type="text" value="${duyuru.sinif}" onchange="duyuruGuncelle(${duyuru.id}, 'sinif', this.value)" class="shadow appearance-none border rounded w-10 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></td>
+                            <td class="py-1 px-3 text-xs  whitespace-nowrap"><input type="text" value="${duyuru.ders_kodu}" onchange="duyuruGuncelle(${duyuru.id}, 'ders_kodu', this.value)" class="shadow appearance-none border rounded w-16 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></td>
+                            <td class="py-1 px-3 text-xs  whitespace-nowrap"><input type="text" value="${duyuru.ders_adi}" onchange="duyuruGuncelle(${duyuru.id}, 'ders_adi', this.value)" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></td>
+                            <td class="py-1 px-3 text-xs  whitespace-nowrap"><input type="text" value="${duyuru.ogretim_elemani}" onchange="duyuruGuncelle(${duyuru.id}, 'ogretim_elemani', this.value)" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></td>
+                            <td class="py-1 px-3 text-xs  whitespace-nowrap"><input type="text" value="${duyuru.derslik}" onchange="duyuruGuncelle(${duyuru.id}, 'derslik', this.value)" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></td>
+                            <td class="py-1 px-3 text-xs  whitespace-nowrap"><input type="text" value="${duyuru.sinifliste}" onchange="duyuruGuncelle(${duyuru.id}, 'sinifliste', this.value)" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></td>
+                            <td class="py-1 px-3 text-xs  whitespace-nowrap"><input type="datetime-local" value="${duyuru.yayin_tarihi}" onchange="duyuruGuncelle(${duyuru.id}, 'yayin_tarihi', this.value)" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></td>
+                            <td class="py-1 px-3 text-xs  whitespace-nowrap"><button onclick="duyuruSil(${duyuru.id})" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Sil</button></td>
+
+                        `;
+                        duyuruListesi.appendChild(row);
+                    });
+                })
+                .catch(err => console.error('Hata:', err));
+        }
+
+        function duyuruGuncelle(id, field, value) {
+            fetch(`/api/duyuru-guncelle/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ [field]: value })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Duyuru güncellendi!');
+                    duyurulariGetir();
+                })
+                .catch(err => console.error('Hata:', err));
+        }
+
+        function duyuruSil(id) {
+            fetch(`/api/duyuru-sil/${id}`, {
+                method: 'DELETE'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Duyuru silindi!');
+                    duyurulariGetir();
+                })
+                .catch(err => console.error('Hata:', err));
+        }
+    </script>
+
+</body>
+
+</html>
