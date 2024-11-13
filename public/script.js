@@ -2,62 +2,35 @@ let ws;
 let countdownInterval;
 let nextVoteInterval;
 
-function connectWebSocket() {
-  ws = new WebSocket(`wss://efjp6ppvfv.eu-central-1.awsapprunner.com:80`);
-
-  ws.onopen = () => {
-    console.log("WebSocket bağlantısı açık.");
-  };
-
-  ws.onclose = () => {
-    console.log("WebSocket bağlantısı kapalı, yeniden bağlanıyor...");
-    setTimeout(connectWebSocket, 1000); // 1 saniye sonra yeniden bağlanmayı dene
-  };
-
-  ws.onerror = (error) => {
-    console.error("WebSocket hatası:", error);
-    ws.close(); // Bağlantıyı kapat ve yeniden başlatmayı sağla
-  };
-
-  ws.onmessage = (event) => {
-    const message = JSON.parse(event.data);
-
-    if (message.type === 'init' || message.type === 'update') {
-      updateRace(message.data);
-    } else if (message.type === 'reset') {
-      updateRace(message.data);
-      document.getElementById('message').innerText = 'Yeni yarış başladı!';
-    } else if (message.type === 'error') {
-      document.getElementById('message').innerText = message.message;
-    }else if (message.type === 'online-users') {
-      document.getElementById('online-users').innerText = `Online Kullanıcı Sayısı: ${message.count}`;
-    }
-  };
+function fetchRaceData() {
+  fetch('/api/race-data')
+      .then(response => response.json())
+      .then(data => updateRace(data))
+      .catch(error => console.error('Error fetching race data:', error));
 }
+// Her 5 saniyede bir yarış verilerini güncelle
+setInterval(fetchRaceData, 1000);
 
 function voteForRace(department) {
   const lastVoteTime = localStorage.getItem('lastRaceVoteTime');
   const currentTime = Date.now();
 
-  // Eğer son oy kullanımı 5 dakikadan önceyse oy vermeyi kısıtla
   if (lastVoteTime && currentTime - lastVoteTime < 5 * 60 * 1000) {
-    const timeRemaining = 5 * 60 * 1000 - (currentTime - lastVoteTime);
-    startNextVoteTimer(timeRemaining); // Kalan süreyi göster
-    document.getElementById('message').innerText = '5 Dakika Dolmadan Oy Kullanamazsınız.';
-    return;
+      document.getElementById('message').innerText = '5 Dakika Dolmadan Oy Kullanamazsınız.';
+      return;
   }
 
-  // Eğer bağlantı açıksa oyu gönder ve zamanı kaydet
-  if (ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: 'race-vote', department })); // WebSocket üzerinden yarış oyu gönder
-    document.getElementById('message').innerText = 'Yarış için oyunuzu verdiniz, 5 dakika bekleyin.';
-    
-    // Oy zamanı kaydedilir ve geri sayım başlatılır
-    localStorage.setItem('lastRaceVoteTime', Date.now());
-    startNextVoteTimer(5 * 60 * 1000); // 5 dakikalık geri sayımı başlat
-  } else {
-    document.getElementById('message').innerText = 'Bağlantı kapalı, yeniden bağlanıyor...';
-  }
+  fetch('/api/race-vote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ department })
+  })
+  .then(response => response.json())
+  .then(data => {
+      document.getElementById('message').innerText = data.message;
+      localStorage.setItem('lastRaceVoteTime', Date.now());
+  })
+  .catch(error => console.error('Error voting for race:', error));
 }
 
 // Geri sayım işlevi
@@ -121,20 +94,49 @@ function voteForPoll(type) {
 
 
 function updateRace(data) {
-  Object.keys(data.departments).forEach((department) => {
-    const votes = data.departments[department];
-    const progress = Math.min((Math.log10(votes + 1) / Math.log10(130+ 1)) * 100, 100);
-    const circle = document.getElementById(`${department}-circle`);
-    circle.style.left = `${progress}%`;
-    const button = document.querySelector(`button[onclick="voteForRace('${department}')"]`);
-    if (button) {
-      button.innerHTML = `${button.textContent.trim().split(' ')[0]} ${department} (${votes} oy)`;
-    }
+  Object.keys(data.departments).forEach(department => {
+      const votes = data.departments[department];
+      const progress = Math.min((Math.log10(votes + 1) / Math.log10(130 + 1)) * 100, 100);
+      
+      const circle = document.getElementById(`${department}-circle`);
+      circle.style.left = `${progress}%`;
+
+      const button = document.querySelector(`button[onclick="voteForRace('${department}')"]`);
+      
+      if (button) {
+          button.innerHTML = `${button.textContent.trim().split(' ')[0]} ${department} (${votes} oy)`;
+      }
   });
+
+  // 5 dakikalık geri sayımı başlat
+  function startCountdown() {
+      const lastVoteTime = localStorage.getItem('lastRaceVoteTime');
+      if (lastVoteTime) {
+          const elapsed = (Date.now() - lastVoteTime) / 1000; // saniye cinsinden
+          const remaining = Math.max(300 - elapsed, 0); // 300 saniye = 5 dakika
+          const countdownElement = document.getElementById('next-vote-timer');
+          if (countdownElement) {
+              countdownElement.innerHTML = `Bir Sonraki Oy için Kalan Süre: ${Math.floor(remaining / 60)} dakika ${Math.floor(remaining % 60)} saniye`;
+          }
+
+          if (remaining > 0) {
+              setTimeout(startCountdown, 1000);
+          }
+      }
+  }
+
+  startCountdown();
 }
+// Her 5 saniyede bir yarış verilerini güncelle
+setInterval(() => {
+  fetch('/api/race-data')
+      .then(response => response.json())
+      .then(data => updateRace(data))
+      .catch(error => console.error('Error fetching race data:', error));
+}, 5000);
 
 window.onload = () => {
-  connectWebSocket();
+
 
   // Sayfa yüklendiğinde, kalan süreyi kontrol et ve geri sayımı başlat
   const lastVoteTime = localStorage.getItem('lastVoteTime');
