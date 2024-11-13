@@ -3,9 +3,8 @@ const bodyParser = require("body-parser");
 const fs = require("fs");
 const path = require("path");
 const cookieParser = require("cookie-parser");
-const http = require('http');
-const WebSocket = require('ws');
-let onlineUsers = 0; // A
+
+
 
 
 const app = express();
@@ -15,68 +14,22 @@ const DATA_PATH = path.join(__dirname, 'database.json');
 const MAX_VOTES = 100; // Winner vote threshold
 let dbCache = loadDatabase();
 // HTTP Server setup
-const server = http.createServer(app); // HTTP sunucusu oluştur
-const wss = new WebSocket.Server({ server }); // WebSocket sunucusunu HTTP sunucusuna bağla
-console.log(`WebSocket server is running on ws://localhost:${PORT}`);
+
 
 // Middleware tanımlamaları
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(express.static("public"));
-// WebSocket connection setup
-wss.on('connection', (ws) => {
-	ws.lastVoteTime = 0; // Initialize last vote time
-	onlineUsers++; // Yeni bağlantıda kullanıcı sayısını artır
-  broadcastOnlineUsers(); // Tüm istemcilere güncellenmiş kullanıcı sayısını gönder
-  
-	ws.send(JSON.stringify({ type: 'init', data: dbCache }));
-    ws.on('close', () => {
-		onlineUsers--; // Bağlantı kapandığında kullanıcı sayısını azalt
-		broadcastOnlineUsers(); // Tüm istemcilere güncellenmiş kullanıcı sayısını gönder
-	  });
 
-	ws.on('message', (message) => {
-	  const { department } = JSON.parse(message);
-	  const currentTime = Date.now();
-  
-	  // Check if user has voted in the last 5 minutes
-	  if (currentTime - ws.lastVoteTime < 5 * 60 * 1000) {
-		ws.send(JSON.stringify());
-		return;
-	  }
-  
-	  // Increase vote count if department exists
-	  if (dbCache.departments[department] !== undefined) {
-		dbCache.departments[department] += 1;
-		ws.lastVoteTime = currentTime; // Update last vote time
-		updateDatabase(dbCache); // Save database immediately
-  
-		// Check if there's a winner after the vote
-		const winner = checkWinner(dbCache.departments);
-		if (winner) {
-		  resetRace(winner); // Reset the race if a winner is found
-		} else {
-		  wss.clients.forEach((client) => {
-			if (client.readyState === WebSocket.OPEN) {
-			  client.send(JSON.stringify({ type: 'update', data: dbCache }));
-			}
-		  });
-		}
-	  }
-	});
 
-	
-  });
+// Yarış verilerini döndüren endpoint
+app.get('/api/race-data', (req, res) => {
+    res.json(dbCache);
+});
 
-  // Online kullanıcı sayısını tüm istemcilere yayınlayan fonksiyon
-function broadcastOnlineUsers() {
-  const message = JSON.stringify({ type: 'online-users', count: onlineUsers });
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
-    }
-  });
-}
+
+
+
 // Dosya yolları
 const counterFilePath = path.join(__dirname, "data", "counter.json");
 const counterLogFilePath = path.join(__dirname, "data","counter.log");
@@ -91,59 +44,49 @@ const voteLogFilePath = path.join(__dirname, "data","vote.log");
 
 // Load data from JSON file
 function loadDatabase() {
-	try {
-	  const data = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'));
-	  if (!data.winners) {
-		data.winners = [];
-	  }
-	  return data;
-	} catch (err) {
-	  console.error("Error loading database:", err);
-	  return { departments: { "ECON": 0, "IKT": 0, "ISL": 0, "SBKY": 0, "UTL": 0 }, winners: [] };
-	}
-  }
+    try {
+        const data = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'));
+        if (!data.winners) {
+            data.winners = [];
+        }
+        return data;
+    } catch (err) {
+        console.error("Error loading database:", err);
+        return { departments: { "ECON": 0, "IKT": 0, "ISL": 0, "SBKY": 0, "UTL": 0 }, winners: [] };
+    }
+}
   
-  // Update JSON file function
-  function updateDatabase(data) {
-	try {
-	  fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2), 'utf8');
-	} catch (err) {
-	  console.error("Error updating database:", err);
-	}
-  }
+function updateDatabase(data) {
+    try {
+        fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2), 'utf8');
+    } catch (err) {
+        console.error("Error updating database:", err);
+    }
+}
   
   // Check if any department has reached the threshold to win
   function checkWinner(departments) {
-	for (const department in departments) {
-	  if (departments[department] >= MAX_VOTES) {
-		return department;
-	  }
-	}
-	return null;
-  }
+    for (const department in departments) {
+        if (departments[department] >= MAX_VOTES) {
+            return department;
+        }
+    }
+    return null;
+}
   
   // Reset the race after a department wins
   function resetRace(winner) {
-	const currentTime = new Date();
-  
-	dbCache.winners.push({
-	  winner: winner,
-	  votes: dbCache.departments[winner],
-	  startTime: new Date(currentTime.getTime() - MAX_VOTES).toISOString(),
-	  endTime: currentTime.toISOString()
-	});
-  
-	dbCache.departments = { ECON: 0, IKT: 0, ISL: 0, SBKY: 0, UTL: 0 };
-	updateDatabase(dbCache); // Save reset data immediately
-  
-	// Notify all clients about the reset
-	wss.clients.forEach((client) => {
-	  if (client.readyState === WebSocket.OPEN) {
-		client.send(JSON.stringify({ type: 'reset', data: dbCache }));
-	  }
-	});
-  }
-  
+    const currentTime = new Date();
+    dbCache.winners.push({
+        winner: winner,
+        votes: dbCache.departments[winner],
+        startTime: new Date(currentTime.getTime() - MAX_VOTES).toISOString(),
+        endTime: currentTime.toISOString()
+    });
+    dbCache.departments = { ECON: 0, IKT: 0, ISL: 0, SBKY: 0, UTL: 0 };
+    updateDatabase(dbCache);
+}
+
 // Tekil /api/data endpoint
 app.get('/api/data', (req, res) => {
 	try {
@@ -381,39 +324,30 @@ app.post("/api/vote", (req, res) => {
 
 
 // Yarış oylama işlemi için yeni endpoint
+// Yarış oylama endpoint'i
 app.post("/api/race-vote", (req, res) => {
-	const { department } = req.body; // Yarış oyu için departman bilgisi alınır
-	const raceVoteCookie = req.cookies && req.cookies.hasRaceVoted;
+    const { department } = req.body;
+    const raceVoteCookie = req.cookies && req.cookies.hasRaceVoted;
 
-	// Eğer daha önce yarışa oy verildiyse mesaj döndür
-	if (raceVoteCookie) {
-		return res.status(403).json({ message: "You have already voted for the race." });
-	}
+    if (raceVoteCookie) {
+        return res.status(403).json({ message: "Zaten Bu Yarışa Oy Verdin." });
+    }
 
-	// Departmana göre oy sayısını artır
-	if (dbCache.departments[department] !== undefined) {
-		dbCache.departments[department] += 1;
-		updateDatabase(dbCache); // Veritabanını güncelle
-		const winner = checkWinner(dbCache.departments);
-		if (winner) {
-			resetRace(winner); // Kazanan varsa yarışı sıfırla
-		} else {
-			// Tüm istemcilere güncellemeyi gönder
-			wss.clients.forEach((client) => {
-				if (client.readyState === WebSocket.OPEN) {
-					client.send(JSON.stringify({ type: 'race-update', data: dbCache }));
-				}
-			});
-		}
+    if (dbCache.departments[department] !== undefined) {
+        dbCache.departments[department] += 1;
+        updateDatabase(dbCache);
 
-		// Yarış oylaması çerezini ayarla (1 saat geçerli)
-		res.cookie("hasRaceVoted", true, { maxAge: 60 * 60 * 1000, httpOnly: true });
-		return res.json({ message: "Race vote registered successfully." });
-	} else {
-		return res.status(400).json({ message: "Invalid department." });
-	}
+        const winner = checkWinner(dbCache.departments);
+        if (winner) {
+            resetRace(winner);
+        }
+        
+        res.cookie("hasRaceVoted", true, { maxAge: 60 * 60 * 1000, httpOnly: true });
+        return res.json({ message: "Başarılı Bir Şekilde Oy Verdin!" });
+    } else {
+        return res.status(400).json({ message: "Geçersiz Bölüm." });
+    }
 });
-
 
 // Duyuru sil
 app.delete("/api/duyuru-sil/:id", (req, res) => {
@@ -453,6 +387,6 @@ app.get("/api/vote", (req, res) => {
 });
 
 module.exports = app;
-server.listen(PORT, () => {
+app.listen(PORT, () => {
 	console.log(`Sunucu ${PORT} portunda çalışıyor.`);
 });
