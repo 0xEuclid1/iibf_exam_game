@@ -3,7 +3,7 @@ let countdownInterval;
 let nextVoteInterval;
 
 function connectWebSocket() {
-  ws = new WebSocket(`ws://localhost:80`);
+  ws = new WebSocket(`ws://efjp6ppvfv.eu-central-1.awsapprunner.com:80`);
 
   ws.onopen = () => {
     console.log("WebSocket bağlantısı açık.");
